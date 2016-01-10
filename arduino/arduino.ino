@@ -6,7 +6,7 @@
 
 #include "sn3218_software_wire.h"
 
-const int NUM_LED = 36;            // Number of Leds
+const int NUM_LED = 36;            // Number of leds
 const unsigned char LED_OFF = 0;   // Minimal brightness
 const unsigned char LED_MAX = 127; // Maximal brightness
 
@@ -51,7 +51,7 @@ void allLedsOff()
   displayLeds();
 }
 
-// Turn all leds brigth
+// Turn all leds bright
 void allLedsOn()
 {
   for (int current = 0; current < NUM_LED; current++) {
@@ -60,7 +60,7 @@ void allLedsOn()
   displayLeds();
 }
 
-// Initialize leach eds with random brightness and speed 
+// Initialize each leds with random brightness and speed 
 void randomInit()
 {
   for (int led = 0; led < NUM_LED; led++) {
@@ -92,7 +92,7 @@ void glowAll()
   displayLeds();
 }
 
-// Turn each led on once
+// Turn on each led once
 void cycleLeds()
 {
   int lastLed = NUM_LED - 1;
