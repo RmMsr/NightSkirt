@@ -6,11 +6,11 @@ before_install:
   - tar xJf arduino-1.6.7-linux64.tar.xz
   - mv arduino-1.6.7 $HOME/arduino_ide
 install:
-  - $HOME/arduino_ide/arduino --install-library SoftwareWire
+  - $HOME/arduino_ide/arduino --install-library "SoftwareWire"
   - curl https://github.com/RmMsr/pimoroni_arduino_sn3218/archive/feature-software-wire.zip -L > pimoroni_arduino_sn3218-feature-software-wire.zip
   - unzip -d $HOME/Arduino/libraries pimoroni_arduino_sn3218-feature-software-wire.zip
 script:
-  - $HOME/arduino_ide/arduino --verify --board arduino:avr:LilyPadUSB arduino/arduino.ino
+  - $HOME/arduino_ide/arduino --verify --board arduino:avr:LilyPadUSB NightSkirt/NightSkirt.ino
 notifications:
   email:
     on_success: change
