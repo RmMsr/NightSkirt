@@ -7,14 +7,17 @@
 #include "sn3218_software_wire.h"
 
 const int NUM_LED = 36;            // Number of leds
-const unsigned char LED_OFF = 0;   // Minimal brightness
+const unsigned char LED_MIN = 0;   // Minimal brightness
 const unsigned char LED_MAX = 127; // Maximal brightness
 
 sn3218_SoftwareWire* driver_1;     // First led driver
 sn3218_SoftwareWire* driver_2;     // Second led driver
 
-unsigned char ledStates[NUM_LED];  // Brightness per led
-char ledChanges[NUM_LED];          // Glowing speed per led
+float ledStates[NUM_LED];          // Brightness per led
+float ledChanges[NUM_LED];         // Brightness Delta per led
+
+const unsigned int loopDelay = 30; // Wait time between loops
+const float glowSpeed = 0.02;      // Animation speed 0.0 < x < 1.0
 
 void setup()
 {
@@ -39,14 +42,14 @@ void setup()
 void loop()
 {
   glowAll();
-  delay(128);
+  delay(loopDelay);
 }
 
 // Turn all leds dark
 void allLedsOff()
 {
   for (int current = 0; current < NUM_LED; current++) {
-    ledStates[current] = LED_OFF;
+    ledStates[current] = LED_MIN;
   }
   displayLeds();
 }
@@ -64,13 +67,8 @@ void allLedsOn()
 void randomInit()
 {
   for (int led = 0; led < NUM_LED; led++) {
-    ledStates[led] = random(0, LED_MAX + 1);
-    char max = 8;
-    /* produce numbers from -max to max excluding 0 */
-    ledChanges[led] = random(1, 2 * max + 1);
-    if (ledChanges[led] > max) {
-       ledChanges[led] -= 2 * max - 1;
-    }
+    ledStates[led] = (float) random(RAND_MAX) / RAND_MAX;
+    ledChanges[led] = ((float) random(RAND_MAX) / RAND_MAX - 0.5) * glowSpeed;
   }
 }
 
@@ -78,16 +76,16 @@ void randomInit()
 void glowAll()
 {
   for (int led = 0; led < NUM_LED; led++) {
-    long brightness = (long) ledStates[led];
+    float brightness = ledStates[led];
     brightness += ledChanges[led];
-    if (brightness < LED_OFF) {
-      brightness = LED_OFF;
+    if (brightness < 0) {
+      brightness = 0;
       ledChanges[led] *= -1;
-    } else if (brightness > LED_MAX) {
-      brightness = LED_MAX;
+    } else if (brightness > 1) {
+      brightness = 1;
       ledChanges[led] *= -1;
     }
-    ledStates[led] = (unsigned char) brightness;
+    ledStates[led] = brightness;
   }  
   displayLeds();
 }
@@ -98,7 +96,7 @@ void cycleLeds()
   int lastLed = NUM_LED - 1;
   for (int currentLed = 0; currentLed < NUM_LED; currentLed++) {
     ledStates[currentLed] = LED_MAX;
-    ledStates[lastLed] = LED_OFF;
+    ledStates[lastLed] = LED_MIN;
     displayLeds();
     delay(50);
     lastLed = currentLed;
@@ -110,10 +108,23 @@ void cycleLeds()
 void displayLeds()
 {
   for (int led = 0; led < 18; led++) {
-    driver_1->set(led, ledStates[led]);
-    driver_2->set(led, ledStates[led + 18]);
+    driver_1->set(led, ledGradient(ledStates[led]));
+    driver_2->set(led, ledGradient(ledStates[led + 18]));
   }
   driver_1->update();
   driver_2->update();
+}
+
+// Compute output values for SN3218 driver
+// Param brigtness [float] (0.0 - 1.0)
+// Return [uint8_t] 0 - 255
+uint8_t ledGradient(float brightness)
+{
+  // Change gradient to to be off for lower values.
+  // Brightness increases exponentially
+  float adjusted = powf(0.7 * brightness + 0.12, 20) * 50;
+  return max(
+    min((uint8_t) (adjusted * LED_MAX), LED_MAX), 
+    LED_MIN);
 }
 
